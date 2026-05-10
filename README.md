@@ -11,7 +11,7 @@ Instead of solving the image captcha, this library switches to the **audio chall
 ## Installation
 
 ```bash
-pip install recaptcha-bypass
+pip install recaptcha-bypass-RizkyRauf
 ```
 
 Or install from source:
