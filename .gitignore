@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+recaptcha_audio.*
+*.png
+venv/
+.venv/
