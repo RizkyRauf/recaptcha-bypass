@@ -1,20 +1,20 @@
 # recaptcha-bypass
 
-Solve Google reCAPTCHA via audio challenge in less than 10 seconds. 🚀
+Selesaikan Google reCAPTCHA via audio challenge dalam waktu kurang dari 10 detik.
 
-Works with **Playwright**, **CloakBrowser**, and **Selenium** drivers.
+**Hanya bekerja dengan Playwright dan CloakBrowser.** Selenium WebDriver tidak didukung (lihat keterbatasan).
 
-## How It Works
+## Cara Kerja
 
-Instead of solving the image captcha, this library switches to the **audio challenge**, downloads the audio file, converts it to WAV, and uses **Google Speech Recognition** to transcribe the numbers/words. The transcribed text is then entered into the response field.
+Library ini beralih ke **audio challenge**, mengunduh file audio, mengonversinya ke WAV, dan menggunakan **Google Speech Recognition** untuk mentranskripsi angka/kata. Teks hasil transkripsi kemudian dimasukkan ke kolom respons.
 
-## Installation
+## Instalasi
 
 ```bash
 pip install recaptcha-bypass-RizkyRauf
 ```
 
-Or install from source:
+Atau instal dari source:
 
 ```bash
 git clone https://github.com/yourname/recaptcha-bypass.git
@@ -22,13 +22,13 @@ cd recaptcha-bypass
 pip install -e .
 ```
 
-**Dependencies:**
-- `pydub` - audio conversion (requires `ffmpeg`: `sudo apt install ffmpeg`)
+**Dependensi:**
+- `pydub` - konversi audio (membutuhkan `ffmpeg`: `sudo apt install ffmpeg`)
 - `SpeechRecognition` - speech-to-text
 
 ## Quick Start
 
-### With CloakBrowser
+### Dengan CloakBrowser
 
 ```python
 from cloakbrowser import launch
@@ -41,12 +41,11 @@ page.goto("https://protected-site.com")
 solver = RecaptchaSolver(page)
 solver.solve_captcha()
 
-# Page is now accessible
 print(page.title())
 browser.close()
 ```
 
-### With Playwright
+### Dengan Playwright
 
 ```python
 from playwright.sync_api import sync_playwright
@@ -64,35 +63,18 @@ with sync_playwright() as p:
     browser.close()
 ```
 
-### With Selenium
+### Dengan SeleniumBase (CDP Mode) — tanpa package ini
 
-```python
-from selenium import webdriver
-from recaptcha_bypass import RecaptchaSolver
-
-driver = webdriver.Chrome()
-driver.get("https://www.google.com/recaptcha/api2/demo")
-
-solver = RecaptchaSolver(driver)
-solver.solve_captcha()
-
-print(driver.title)
-driver.quit()
-```
-
-### With SeleniumBase
+Package ini **tidak support Selenium atau SeleniumBase**. Tapi SeleniumBase UC+CDP mode bisa bypass reCAPTCHA langsung:
 
 ```python
 from seleniumbase import SB
-from recaptcha_bypass import RecaptchaSolver
 
-with SB(uc=True, headless=True) as sb:
-    sb.open("https://protected-site.com")
-    sb.sleep(5)
+with SB(uc=True, test=True, headless=True) as sb:
+    sb.activate_cdp_mode("https://protected-site.com")
+    sb.sleep(3)
 
-    solver = RecaptchaSolver(sb.driver)
-    solver.solve_captcha()
-
+    # SeleniumBase CDP mode otomatis handle reCAPTCHA
     print(sb.get_title())
 ```
 
@@ -100,123 +82,103 @@ with SB(uc=True, headless=True) as sb:
 
 ### `RecaptchaSolver(driver, *, headless=True)`
 
-| Parameter | Type | Default | Description |
+| Parameter | Tipe | Default | Deskripsi |
 |---|---|---|---|
-| `driver` | Playwright Page / Selenium WebDriver | required | Browser automation driver |
-| `headless` | bool | `True` | Whether browser runs headless |
+| `driver` | Playwright Page / CloakBrowser Page | required | Driver browser automation |
+| `headless` | bool | `True` | Apakah browser berjalan headless |
 
 ### Methods
 
-| Method | Returns | Description |
+| Method | Return | Deskripsi |
 |---|---|---|
-| `solve_captcha(max_retries=5)` | `bool` | Solve reCAPTCHA on current page |
-| `is_solved()` | `bool` | Check if reCAPTCHA is solved |
-| `is_detected()` | `bool` | Check if bot was detected |
-| `get_token()` | `str \| None` | Get reCAPTCHA response token |
+| `solve_captcha(max_retries=5)` | `bool` | Selesaikan reCAPTCHA di halaman saat ini |
+| `is_solved()` | `bool` | Cek apakah reCAPTCHA sudah terpecahkan |
+| `is_detected()` | `bool` | Cek apakah bot terdeteksi |
+| `get_token()` | `str \| None` | Dapatkan token respons reCAPTCHA |
 
 ## Advanced Usage
 
-### Retry with custom attempts
+### Retry dengan custom attempts
 
 ```python
 solver = RecaptchaSolver(page)
 success = solver.solve_captcha(max_retries=10)
 if not success:
-    print("Failed to solve CAPTCHA")
+    print("Gagal menyelesaikan CAPTCHA")
 ```
 
-### Check if CAPTCHA exists before solving
+### Cek apakah CAPTCHA ada sebelum menyelesaikan
 
 ```python
 solver = RecaptchaSolver(page)
 if solver._has_recaptcha():
-    print("CAPTCHA detected, solving...")
+    print("CAPTCHA terdeteksi, menyelesaikan...")
     solver.solve_captcha()
 else:
-    print("No CAPTCHA found")
+    print("Tidak ada CAPTCHA")
 ```
 
-### Get reCAPTCHA token for API calls
+### Dapatkan token reCAPTCHA untuk panggilan API
 
 ```python
 solver = RecaptchaSolver(page)
 solver.solve_captcha()
 token = solver.get_token()
 if token:
-    # Use token in your API request
-    print(f"reCAPTCHA token: {token[:50]}...")
+    print(f"Token reCAPTCHA: {token[:50]}...")
 ```
 
-### Combined with CloakBrowser stealth
+## Situs yang Didukung
 
-```python
-from cloakbrowser import launch
-from recaptcha_bypass import RecaptchaSolver
-
-# CloakBrowser prevents CAPTCHA from appearing (~80% cases)
-browser = launch(headless=True, humanize=True)
-page = browser.new_page()
-page.goto("https://protected-site.com")
-
-# Fallback: solve CAPTCHA if it still appears
-solver = RecaptchaSolver(page)
-if solver._has_recaptcha():
-    solver.solve_captcha()
-
-# Now scrape
-content = page.inner_text("body")
-browser.close()
-```
-
-## Supported Sites
-
-| Site | CAPTCHA Type | Success Rate |
+| Situs | Tipe CAPTCHA | Tingkat Keberhasilan |
 |---|---|---|
-| radaronline.id | reCAPTCHA v2 | ✅ High |
-| GitLab login | reCAPTCHA v2 | ✅ High |
-| Ahrefs | reCAPTCHA v2 | ✅ High |
-| Any reCAPTCHA v2 site | reCAPTCHA v2 | ✅ High |
+| radaronline.id | reCAPTCHA v2 | ✅ Tinggi |
+| GitLab login | reCAPTCHA v2 | ✅ Tinggi |
+| Ahrefs | reCAPTCHA v2 | ✅ Tinggi |
+| Situs reCAPTCHA v2 lainnya | reCAPTCHA v2 | ✅ Tinggi |
 
-## Limitations
+## Keterbatasan
 
-- **reCAPTCHA v2 only** - does not support reCAPTCHA v3, Enterprise, or hCaptcha
-- **Rate limiting** - Google may block your IP if you solve too many CAPTCHAs quickly. Use proxies or add delays between solves
-- **Audio recognition** - depends on Google Speech API accuracy. May fail on noisy audio
-- **Not for production scale** - for large-scale scraping, consider paid CAPTCHA solving services (CapSolver, 2Captcha)
+- **reCAPTCHA v2 only** - tidak mendukung reCAPTCHA v3, Enterprise, atau hCaptcha
+- **Selenium WebDriver TIDAK didukung** - Chrome security restriction mencegah Selenium berinteraksi dengan iframe cross-origin. Gunakan Playwright atau CloakBrowser.
+- **Rate limiting** - Google dapat memblokir IP jika terlalu banyak CAPTCHA diselesaikan dalam waktu cepat. Gunakan proxy atau tambahkan delay.
+- **Audio recognition** - tergantung akurasi Google Speech API. Mungkin gagal pada audio yang bising.
+- **Bukan untuk skala produksi** - untuk scraping skala besar, pertimbangkan layanan CAPTCHA solving berbayar (CapSolver, 2Captcha).
 
-## Architecture
+## Arsitektur
 
 ```
 ┌─────────────────────────────────────────────────┐
 │                 recaptcha-bypass                 │
 ├─────────────────────────────────────────────────┤
 │                                                  │
-│  ┌──────────────┐    ┌──────────────────────┐   │
-│  │  Playwright   │    │      Selenium         │   │
-│  │  (CloakBrowser)│    │   (WebDriver)         │   │
-│  └──────┬───────┘    └──────────┬───────────┘   │
-│         │                       │                │
-│         └───────────┬───────────┘                │
-│                     │                            │
-│         ┌───────────▼───────────┐                │
-│         │    RecaptchaSolver     │                │
-│         │                        │                │
-│         │  1. Click checkbox     │                │
-│         │  2. Switch to audio    │                │
-│         │  3. Download MP3       │                │
-│         │  4. Convert to WAV     │                │
-│         │  5. Speech → Text      │                │
-│         │  6. Submit answer      │                │
-│         │  7. Retry if needed    │                │
-│         └────────────────────────┘                │
-│                     │                            │
-│         ┌───────────▼───────────┐                │
-│         │   pydub +             │                │
-│         │   SpeechRecognition   │                │
-│         └───────────────────────┘                │
+│  ┌──────────────────────┐                        │
+│  │  Playwright           │                        │
+│  │  (CloakBrowser)       │  ✅ Berfungsi penuh    │
+│  └──────────┬───────────┘                        │
+│             │                                    │
+│  ┌──────────▼───────────┐                        │
+│  │    RecaptchaSolver     │                        │
+│  │                        │                        │
+│  │  1. Click checkbox     │                        │
+│  │  2. Switch to audio    │                        │
+│  │  3. Download MP3       │                        │
+│  │  4. Convert to WAV     │                        │
+│  │  5. Speech → Text      │                        │
+│  │  6. Submit answer      │                        │
+│  │  7. Retry if needed    │                        │
+│  └────────────────────────┘                        │
+│             │                                    │
+│  ┌──────────▼───────────┐                        │
+│  │   pydub +             │                        │
+│  │   SpeechRecognition   │                        │
+│  └───────────────────────┘                        │
+│                                                  │
+│  Catatan: Selenium ❌ Tidak didukung              │
+│  (cross-origin iframe restriction)                │
 └─────────────────────────────────────────────────┘
 ```
 
-## License
+## Lisensi
 
 MIT
