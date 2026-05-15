@@ -143,16 +143,19 @@ class RecaptchaSolver:
                         return
         else:
             self.driver.switch_to.default_content()
-            frames = self.driver.find_elements("xpath", "//iframe[contains(@title, 'recaptcha')]")
-            if frames:
-                self.driver.switch_to.frame(frames[0])
+            frames = self.driver.find_elements("xpath", "//iframe[contains(@src, 'recaptcha')]")
+            for frame in frames:
+                self.driver.switch_to.frame(frame)
                 checkbox = self.driver.find_elements("xpath", "//*[@role='checkbox']")
                 if checkbox:
                     checkbox[0].click()
-                else:
-                    container = self.driver.find_elements("xpath", "//*[@id='rc-anchor-container']")
-                    if container:
-                        container[0].click()
+                    self.driver.switch_to.default_content()
+                    return
+                container = self.driver.find_elements("xpath", "//*[@id='rc-anchor-container']")
+                if container:
+                    container[0].click()
+                    self.driver.switch_to.default_content()
+                    return
                 self.driver.switch_to.default_content()
 
     def _click_audio_button(self):
@@ -172,12 +175,14 @@ class RecaptchaSolver:
                             return
         else:
             self.driver.switch_to.default_content()
-            frames = self.driver.find_elements("xpath", "//iframe[contains(@title, 'recaptcha')]")
-            if frames:
-                self.driver.switch_to.frame(frames[0])
+            frames = self.driver.find_elements("xpath", "//iframe[contains(@src, 'recaptcha')]")
+            for frame in frames:
+                self.driver.switch_to.frame(frame)
                 btn = self.driver.find_elements("xpath", "//*[@id='recaptcha-audio-button']")
                 if btn:
                     btn[0].click()
+                    self.driver.switch_to.default_content()
+                    return
                 self.driver.switch_to.default_content()
 
     def _get_audio_url(self) -> Optional[str]:
@@ -196,9 +201,9 @@ class RecaptchaSolver:
                         pass
         else:
             self.driver.switch_to.default_content()
-            frames = self.driver.find_elements("xpath", "//iframe[contains(@title, 'recaptcha')]")
-            if frames:
-                self.driver.switch_to.frame(frames[0])
+            frames = self.driver.find_elements("xpath", "//iframe[contains(@src, 'recaptcha')]")
+            for frame in frames:
+                self.driver.switch_to.frame(frame)
                 try:
                     audio = self.driver.find_elements("xpath", "//audio")
                     if audio:
@@ -259,15 +264,17 @@ class RecaptchaSolver:
                         return
         else:
             self.driver.switch_to.default_content()
-            frames = self.driver.find_elements("xpath", "//iframe[contains(@title, 'recaptcha')]")
-            if frames:
-                self.driver.switch_to.frame(frames[0])
+            frames = self.driver.find_elements("xpath", "//iframe[contains(@src, 'recaptcha')]")
+            for frame in frames:
+                self.driver.switch_to.frame(frame)
                 response = self.driver.find_elements("xpath", "//*[@id='audio-response']")
                 if response:
                     response[0].clear()
                     response[0].send_keys(answer)
                     time.sleep(0.3)
                     response[0].send_keys("\n")
+                    self.driver.switch_to.default_content()
+                    return
                 self.driver.switch_to.default_content()
 
     def _reload_audio(self):
@@ -284,12 +291,14 @@ class RecaptchaSolver:
                         pass
         else:
             self.driver.switch_to.default_content()
-            frames = self.driver.find_elements("xpath", "//iframe[contains(@title, 'recaptcha')]")
-            if frames:
-                self.driver.switch_to.frame(frames[0])
+            frames = self.driver.find_elements("xpath", "//iframe[contains(@src, 'recaptcha')]")
+            for frame in frames:
+                self.driver.switch_to.frame(frame)
                 btn = self.driver.find_elements("xpath", "//*[@id='recaptcha-reload-button']")
                 if btn:
                     btn[0].click()
+                    self.driver.switch_to.default_content()
+                    return
                 self.driver.switch_to.default_content()
 
     def is_solved(self) -> bool:
